@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+  ADMIN
+}
+
+enum QuestionType {
+  MCQ
+  TRUE_FALSE
+  SHORT_ANSWER
+  NUMERICAL
+}
+
+enum Difficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(STUDENT)
+  grade        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  responses        Response[]
+  enrollments      Enrollment[]
+  taughtCourses    Course[]      @relation("TeacherCourses")
+  knowledgeStates  KnowledgeState[]
+  gapReports       GapReport[]
+  recommendations  Recommendation[]
+}
+
+model Course {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  grade       String
+  teacherId   String
+  teacher     User     @relation("TeacherCourses", fields: [teacherId], references: [id])
+  createdAt   DateTime @default(now())
+
+  topics        Topic[]
+  assessments   Assessment[]
+  enrollments   Enrollment[]
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  courseId  String
+  user      User     @relation(fields: [userId], references: [id])
+  course    Course   @relation(fields: [courseId], references: [id])
+  enrolledAt DateTime @default(now())
+
+  @@unique([userId, courseId])
+}
+
+model Topic {
+  id          String   @id @default(uuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  name        String
+  description String?
+  parentTopicId String?
+  parent      Topic?   @relation("TopicHierarchy", fields: [parentTopicId], references: [id])
+  children    Topic[]  @relation("TopicHierarchy")
+  order       Int      @default(0)
+
+  questions     Question[]
+  knowledgeStates KnowledgeState[]
+  gapReports    GapReport[]
+}
+
+model Assessment {
+  id          String   @id @default(uuid())
+  courseId    String
+  course      Course   @relation(fields: [courseId], references: [id])
+  title       String
+  description String?
+  scheduledAt DateTime?
+  durationMins Int     @default(30)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  questions  Question[]
+  responses  Response[]
+}
+
+model Question {
+  id           String     @id @default(uuid())
+  topicId      String
+  topic        Topic      @relation(fields: [topicId], references: [id])
+  assessmentId String?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id])
+  type         QuestionType
+  difficulty   Difficulty @default(MEDIUM)
+  stem         String
+  options      Json?
+  correctAnswer String
+  explanation  String?
+  marks        Float      @default(1)
+  createdAt    DateTime   @default(now())
+
+  responses Response[]
+}
+
+model Response {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  questionId  String
+  question    Question @relation(fields: [questionId], references: [id])
+  assessmentId String?
+  assessment   Assessment? @relation(fields: [assessmentId], references: [id])
+  userAnswer   String
+  isCorrect    Boolean
+  timeTakenSec Int
+  createdAt   DateTime @default(now())
+
+  @@index([userId, questionId])
+}
+
+model KnowledgeState {
+  id          String   @id @default(uuid())
+  userId      String
+  topicId     String
+  user        User     @relation(fields: [userId], references: [id])
+  topic       Topic    @relation(fields: [topicId], references: [id])
+  masteryProb Float    @default(0.1)   // P(known) from BKT
+  attempts    Int      @default(0)
+  correctAttempts Int  @default(0)
+  lastUpdated DateTime @updatedAt
+
+  @@unique([userId, topicId])
+}
+
+model GapReport {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  topicId     String
+  topic       Topic    @relation(fields: [topicId], references: [id])
+  severity    String   // LOW, MEDIUM, HIGH, CRITICAL
+  masteryProb Float
+  detectedAt  DateTime @default(now())
+  resolved    Boolean  @default(false)
+  notes       String?
+}
+
+model Recommendation {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  topicId     String?
+  type        String   // REMEDIATION, PRACTICE, ADVANCED
+  content     Json
+  createdAt   DateTime @default(now())
+  consumedAt  DateTime?
+}

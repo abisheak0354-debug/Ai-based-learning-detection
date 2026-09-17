@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color: #131b2e;
+  background: #faf8ff;
+  font-family: 'Inter', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply antialiased;
+  margin: 0;
+  min-height: 100vh;
+  background: linear-gradient(180deg, #faf8ff 0%, #f5f5ff 100%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+input[type='range'] {
+  accent-color: #4f46e5;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}

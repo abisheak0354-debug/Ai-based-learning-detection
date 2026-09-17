@@ -1,0 +1,10 @@
+backend/.env
+backend/python-api/.env
+backend/python-api/.venv/
+backend/python-api/data/
+backend/node_modules/
+backend/dist/
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+*.pyc

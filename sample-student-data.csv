@@ -1,0 +1,4 @@
+student_id,student_name,subject,score,attempts,correct
+STU-1001,Aarav Patel,Mathematics,42,10,4
+STU-1001,Aarav Patel,Physics,78,10,8
+STU-1001,Aarav Patel,Computer Science,91,10,9
